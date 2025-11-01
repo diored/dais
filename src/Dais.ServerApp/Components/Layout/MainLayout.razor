@@ -1,0 +1,21 @@
+﻿@inherits LayoutComponentBase
+
+@inject IConfiguration Configuration
+
+<main class="grid">
+    <div id="primary-logo" class="container"></div>
+    <div class="container center-content">
+        @Body
+    </div>
+</main>
+<footer>
+    <small>@Configuration["Version"]</small>
+    <small>DioRED</small>
+    <button id="theme-toggle" data-tooltip="Toggle theme" data-placement="left">🌙</button>
+</footer>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>

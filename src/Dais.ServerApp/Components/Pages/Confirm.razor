@@ -1,0 +1,69 @@
+﻿@page "/confirm"
+@rendermode InteractiveServer
+
+@using DioRed.Dais.Core
+@using DioRed.Dais.Core.Entities
+@using DioRed.Dais.Core.Services
+@using Microsoft.AspNetCore.Mvc.ViewFeatures
+@using System.Web
+
+@inject ILoginContextService LoginContextService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Confirm you login | DAIS</PageTitle>
+
+@if (_loginContext is null)
+{
+    <h2 aria-busy="true">Loading...</h2>
+}
+else
+{
+    <div>
+        <h1>Confirm your login</h1>
+        <p>You are currently signed in as @_loginContext.User.DisplayName (@_loginContext.User.UserName).</p>
+        @if (_loginContext.Application is not null)
+        {
+            <p>
+                Would you like to continue to "@_loginContext.Application.ApplicationName" using this account?
+            </p>
+
+            <div class="grid">
+                <button @onclick="ConfirmLogin">Continue</button>
+                <button class="outline second-button" @onclick="Logout">Switch account</button>
+            </div>
+        }
+    </div>
+}
+
+@code {
+
+    [Parameter, SupplyParameterFromQuery] public string Code { get; set; } = default!;
+
+    private LoginContext? _loginContext;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _loginContext = LoginContextService.Pull(Code);
+            StateHasChanged();
+        }
+    }
+
+    private void ConfirmLogin()
+    {
+        if (_loginContext?.Application is not null)
+        {
+            NavigationManager.NavigateTo(_loginContext.Application.ApplicationCallback);
+        }
+    }
+
+    private void Logout()
+    {
+        string uri = _loginContext!.AuthorizeCallback is null
+            ? "/logout"
+            : $"/logout?authorizeCallback={HttpUtility.UrlEncode(_loginContext!.AuthorizeCallback)}";
+
+        NavigationManager.NavigateTo(uri, forceLoad: true);
+    }
+}

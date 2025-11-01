@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+    <AssemblyName>DioRed.Dais.ServerApp</AssemblyName>
+    <RootNamespace>DioRed.Dais.ServerApp</RootNamespace>
+    <UserSecretsId>c6bcb664-a16a-45b7-a1a5-45bd3db28bb6</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DioRed.Common.ConfigurationExtensions" Version="0.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Dais.Core\Dais.Core.csproj" />
+  </ItemGroup>
+
+</Project>

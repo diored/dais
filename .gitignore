@@ -361,3 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Local files
+/src/Dais.ServerApp/crypto_key
+/desktop.ini

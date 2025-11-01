@@ -1,0 +1,45 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+
+    <script>
+        (function() {
+            try {
+                const saved = localStorage.getItem("theme") || "light";
+                document.documentElement.setAttribute("data-theme", saved);
+            } catch { /* localStorage is unavailable */ }
+        })();
+    </script>
+
+    <ResourcePreloader />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Jura:wght@300..700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@picocss/pico@2/css/pico.min.css" />
+    <link rel="stylesheet" href="@Assets["app.css"]" />
+    <link rel="stylesheet" href="@Assets["DioRed.Dais.ServerApp.styles.css"]" />
+    <ImportMap />
+    <HeadOutlet />
+</head>
+
+<body>
+    <Routes />
+    <ReconnectModal />
+
+    <script src="@Assets["theme.js"]"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            window.themeManager.init();
+            document.getElementById("theme-toggle")?.addEventListener("click", () => {
+                window.themeManager.toggle();
+            });
+        });
+    </script>
+    <script src="@Assets["_framework/blazor.web.js"]"></script>
+</body>
+
+</html>

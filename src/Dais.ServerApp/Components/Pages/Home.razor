@@ -1,0 +1,17 @@
+﻿@page "/"
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Components.Authorization
+
+<PageTitle>Home | DAIS</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <h3>Greeting, @context.User.Identity?.Name!</h3>
+        <a href="/logout">Logout</a>
+    </Authorized>
+    <NotAuthorized>
+        <h3>Greetings, guest!</h3>
+        <a href="/login">Go to Login page</a>
+    </NotAuthorized>
+</AuthorizeView>

@@ -1,0 +1,84 @@
+﻿@page "/login"
+@rendermode InteractiveServer
+
+@using DioRed.Dais.Core
+@using DioRed.Dais.Core.Entities
+@using DioRed.Dais.Core.Services
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.Extensions.Caching.Memory
+@using System.Security.Claims
+
+@inject IConfiguration Configuration
+@inject ILoginContextService LoginContextService
+@inject NavigationManager NavigationManager
+@inject IDataService DataService
+
+<PageTitle>Login | DAIS</PageTitle>
+
+<form>
+    <fieldset>
+        <label>
+            Username:
+            <input type="text" @bind="_userName" autocomplete="username" />
+        </label>
+        <label>
+            Password:
+            <input type="password" @bind="_password" autocomplete="password" />
+        </label>
+    </fieldset>
+
+    <small id="login-status">
+        @if (_isInvalid)
+        {
+            @:Invalid username or password!
+        }
+        else
+        {
+            @:&nbsp;
+        }
+    </small>
+
+    <button aria-busy="@_isBusy" @onclick="TryToLogin" @onclick:preventDefault="true">Login</button>
+</form>
+
+@code {
+
+    [Parameter, SupplyParameterFromQuery] public string? AuthorizeCallback { get; set; } = default!;
+
+    private string _userName = "";
+    private string _password = "";
+
+    private bool _isInvalid;
+    private string _isBusy = "false";
+
+    private async Task TryToLogin(MouseEventArgs evt)
+    {
+        _isInvalid = false;
+        _isBusy = "true";
+
+        UserProfile? userProfile = DataService.FindUser(_userName, _password);
+
+        _isBusy = "false";
+
+        if (userProfile is null)
+        {
+            _isInvalid = true;
+            return;
+        }
+
+        LoginContext loginContext = new()
+        {
+            User = new LoginContext.UserData(
+                userProfile.UserName,
+                userProfile.DisplayName
+            ),
+            AuthorizeCallback = AuthorizeCallback,
+            Application = null,
+            ExpiresAt = DateTimeOffset.Now.Add(Constants.LoginContextExpiration)
+        };
+
+        string code = LoginContextService.Save(loginContext);
+
+        NavigationManager.NavigateTo($"/oauth/set-cookie?code={code}", forceLoad: true);
+    }
+}
