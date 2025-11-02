@@ -6,7 +6,6 @@ using DioRed.Dais.ServerApp.Endpoints;
 using Microsoft.AspNetCore.HttpOverrides;
 
 using MongoDB.Bson.Serialization.Conventions;
-using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,7 +21,7 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddSingleton<DevKeys>();
 builder.Services.AddSingleton<ILoginContextService, InMemoryLoginContextService>();
 
-SetupMongoDb();
+SetupDataService(builder);
 
 builder.Services.AddHttpContextAccessor();
 
@@ -74,25 +73,17 @@ void ForwardHeadersForHttps()
     app.UseForwardedHeaders(forwardedHeadersOptions);
 }
 
-void SetupMongoDb()
+static void SetupDataService(WebApplicationBuilder builder)
 {
-    var conventionPack = new ConventionPack
-    {
+    ConventionPack conventionPack =
+    [
         new CamelCaseElementNameConvention(),
         new IgnoreIfNullConvention(true)
-    };
+    ];
     ConventionRegistry.Register("CamelCase", conventionPack, _ => true);
 
-    string connectionString = builder.Configuration.GetRequiredValue("Database:ConnectionString");
-    string databaseName = builder.Configuration.GetRequiredValue("Database:DatabaseName");
-    string applicationsCollectionName = builder.Configuration.GetRequiredValue("Database:Collections:Applications");
-    string clientsCollectionName = builder.Configuration.GetRequiredValue("Database:Collections:Clients");
-    string usersCollectionName = builder.Configuration.GetRequiredValue("Database:Collections:Users");
-
-    MongoClient mongoClient = new($"{connectionString}/?authSource={databaseName}");
-    IMongoDatabase database = mongoClient.GetDatabase(databaseName);
-
-    MongoDbDataService dataService = new(database, applicationsCollectionName, clientsCollectionName, usersCollectionName);
+    MongoDbSettings settings = builder.Configuration.GetRequiredSection("Database").GetRequired<MongoDbSettings>();
+    MongoDbDataService dataService = new(settings);
 
     builder.Services.AddSingleton<IDataService>(dataService);
 }

@@ -6,25 +6,30 @@ using MongoDB.Driver;
 
 namespace DioRed.Dais.Core.Services;
 
-public class MongoDbDataService(
-    IMongoDatabase db,
-    string applicationsCollectionName,
-    string clientsCollectionName,
-    string usersCollectionName
-) : IDataService
+public class MongoDbDataService : IDataService
 {
-    private readonly MongoApplicationRepository applications = new(db, applicationsCollectionName);
-    private readonly MongoClientRepository clients = new(db, clientsCollectionName);
-    private readonly MongoUserRepository users = new(db, usersCollectionName);
+    private readonly MongoApplicationRepository _applications;
+    private readonly MongoClientRepository _clients;
+    private readonly MongoUserRepository _users;
+
+    public MongoDbDataService(MongoDbSettings settings)
+    {
+        MongoClient mongoClient = new($"{settings.ConnectionString}/?authSource={settings.DatabaseName}");
+        IMongoDatabase database = mongoClient.GetDatabase(settings.DatabaseName);
+
+        _applications = new MongoApplicationRepository(database, settings.Collections.Applications);
+        _clients = new MongoClientRepository(database, settings.Collections.Clients);
+        _users = new MongoUserRepository(database, settings.Collections.Users);
+    }
 
     public RegisteredApplication? FindApplicationByCallback(string redirectUri, string clientId)
     {
-        if (clients.FindByClientId(clientId) is not { } owner)
+        if (_clients.FindByClientId(clientId) is not { } owner)
         {
             return null;
         }
 
-        if (applications.Find(owner.Id, redirectUri) is not { } application)
+        if (_applications.Find(owner.Id, redirectUri) is not { } application)
         {
             return null;
         }
@@ -35,7 +40,7 @@ public class MongoDbDataService(
     public UserProfile? FindUser(string username, string password)
     {
         // Preventing the timing attacks
-        UserDto user = users.FindByUserName(username) ?? DummyUser.Instance;
+        UserDto user = _users.FindByUserName(username) ?? DummyUser.Instance;
 
         byte[] salt = Convert.FromBase64String(user.Salt);
         SaltedPassword saltedPassword = SaltedPassword.Create(password, salt);
@@ -54,33 +59,33 @@ public class MongoDbDataService(
 
     public bool HasRegisteredClient(string clientId)
     {
-        return clients.FindByClientId(clientId) is not null;
+        return _clients.FindByClientId(clientId) is not null;
     }
 
     public bool HasRegisteredClient(string clientId, string clientSecret)
     {
-        return clients.Find(clientId, clientSecret) is not null;
+        return _clients.Find(clientId, clientSecret) is not null;
     }
 
     public void RegisterApp(string clientId, string appName, string[] callbacks)
     {
-        if (clients.FindByClientId(clientId) is not { } client)
+        if (_clients.FindByClientId(clientId) is not { } client)
         {
             throw new InvalidOperationException("Client not found");
         }
 
-        applications.Add(client.Id, appName, callbacks);
+        _applications.Add(client.Id, appName, callbacks);
     }
 
     public void RegisterClient(string clientId, string clientSecret)
     {
-        clients.Add(clientId, clientSecret);
+        _clients.Add(clientId, clientSecret);
     }
 
     public void RegisterUser(string userName, string displayName, string password)
     {
         SaltedPassword salted = SaltedPassword.CreateWithRandomSalt(password);
 
-        users.Add(userName, displayName, salted.PasswordHash, salted.Salt);
+        _users.Add(userName, displayName, salted.PasswordHash, salted.Salt);
     }
 }
