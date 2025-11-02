@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 
-namespace DioRed.Dais.Core;
+namespace DioRed.Dais.Core.Internal;
 
 internal static class IdGenerator
 {

@@ -1,14 +1,9 @@
-﻿using DioRed.Dais.Core.Dto;
+﻿using DioRed.Dais.Core.Internal;
+using DioRed.Dais.Core.Internal.Dto;
 
 using MongoDB.Driver;
 
-namespace DioRed.Dais.Core.Repositories;
-
-internal interface IApplicationRepository
-{
-    string Add(string ownerId, string name, string[] callbacks);
-    ApplicationDto? Find(string ownerId, string callback);
-}
+namespace DioRed.Dais.Core.Internal.Repositories;
 
 internal class MongoApplicationRepository(
     IMongoDatabase db,

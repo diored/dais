@@ -1,4 +1,4 @@
-﻿namespace DioRed.Dais.Core.Dto;
+﻿namespace DioRed.Dais.Core.Internal.Dto;
 
 internal class ApplicationDto
 {

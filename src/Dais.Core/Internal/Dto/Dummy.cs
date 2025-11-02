@@ -1,6 +1,6 @@
 ﻿using System.Security.Cryptography;
 
-namespace DioRed.Dais.Core.Dto;
+namespace DioRed.Dais.Core.Internal.Dto;
 
 /// <summary>
 /// Helps to prevent timing attacks

@@ -1,4 +1,5 @@
 <Solution>
-  <Project Path="Dais.Core/Dais.Core.csproj" Id="dca3b11c-d407-42e0-9c43-aae80c92814f" />
+  <Project Path="Dais.Client/Dais.Client.csproj" />
+  <Project Path="Dais.Core/Dais.Core.csproj" />
   <Project Path="Dais.ServerApp/Dais.ServerApp.csproj" />
 </Solution>

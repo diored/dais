@@ -1,14 +1,9 @@
-﻿
-using DioRed.Dais.Core.Dto;
+﻿using DioRed.Dais.Core.Internal;
+using DioRed.Dais.Core.Internal.Dto;
 
 using MongoDB.Driver;
 
-namespace DioRed.Dais.Core.Repositories;
-
-internal interface IUserRepository
-{
-    UserDto? FindByUserName(string userName);
-}
+namespace DioRed.Dais.Core.Internal.Repositories;
 
 internal class MongoUserRepository(
     IMongoDatabase db,

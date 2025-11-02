@@ -2,9 +2,9 @@ using System.Security.Cryptography;
 
 using DioRed.Common.Hash;
 
-namespace DioRed.Dais.Core;
+namespace DioRed.Dais.Core.Internal;
 
-public class SaltedPassword
+internal class SaltedPassword
 {
     public const int DefaultSaltLength = 6;
 

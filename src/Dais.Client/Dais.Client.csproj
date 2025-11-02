@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <LangVersion>preview</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>DioRed.Dais.Client</AssemblyName>
+    <RootNamespace>DioRed.Dais.Client</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Title>DAIS Client</Title>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <Authors>DioRED</Authors>
+    <Version>1.0.0-preview.1</Version>
+    <PackageId>DioRed.Dais.Client</PackageId>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>logo-256.png</PackageIcon>
+    <Description>Client library for the DAIS Identity Server by DioRED</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="logo-256.png" Pack="true" PackagePath="." />
+    <None Include="README.md" Pack="true" PackagePath="." />
+  </ItemGroup>
+
+</Project>

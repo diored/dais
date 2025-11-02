@@ -1,12 +1,12 @@
 ﻿@page "/login"
 @rendermode InteractiveServer
 
+@using System.Security.Claims
 @using DioRed.Dais.Core
 @using DioRed.Dais.Core.Entities
 @using DioRed.Dais.Core.Services
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.Extensions.Caching.Memory
-@using System.Security.Claims
 
 @inject IConfiguration Configuration
 @inject ILoginContextService LoginContextService

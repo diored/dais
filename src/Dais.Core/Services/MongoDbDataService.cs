@@ -1,6 +1,7 @@
-﻿using DioRed.Dais.Core.Dto;
-using DioRed.Dais.Core.Entities;
-using DioRed.Dais.Core.Repositories;
+﻿using DioRed.Dais.Core.Entities;
+using DioRed.Dais.Core.Internal;
+using DioRed.Dais.Core.Internal.Dto;
+using DioRed.Dais.Core.Internal.Repositories;
 
 using MongoDB.Driver;
 

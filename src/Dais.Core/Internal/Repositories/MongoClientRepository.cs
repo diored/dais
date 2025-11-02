@@ -1,17 +1,9 @@
-﻿
-using System.Xml;
-
-using DioRed.Dais.Core.Dto;
+﻿using DioRed.Dais.Core.Internal;
+using DioRed.Dais.Core.Internal.Dto;
 
 using MongoDB.Driver;
 
-namespace DioRed.Dais.Core.Repositories;
-
-internal interface IClientRepository
-{
-    string Add(string clientId, string clientSecret);
-    ClientDto? FindByClientId(string clientId);
-}
+namespace DioRed.Dais.Core.Internal.Repositories;
 
 internal class MongoClientRepository(
     IMongoDatabase db,
