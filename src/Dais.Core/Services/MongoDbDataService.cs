@@ -40,12 +40,12 @@ public class MongoDbDataService : IDataService
     public UserProfile? FindUser(string username, string password)
     {
         // Preventing the timing attacks
-        UserDto user = _users.FindByUserName(username) ?? DummyUser.Instance;
+        UserDto user = _users.FindByUserName(username) ?? Dummy.User;
 
         byte[] salt = Convert.FromBase64String(user.Salt);
         SaltedPassword saltedPassword = SaltedPassword.Create(password, salt);
 
-        if (saltedPassword.PasswordHash != user.Password || user == DummyUser.Instance)
+        if (saltedPassword.PasswordHash != user.Password || user == Dummy.User)
         {
             return null;
         }
@@ -64,7 +64,13 @@ public class MongoDbDataService : IDataService
 
     public bool HasRegisteredClient(string clientId, string clientSecret)
     {
-        return _clients.Find(clientId, clientSecret) is not null;
+        // Preventing the timing attacks
+        ClientDto client = _clients.FindByClientId(clientId) ?? Dummy.Client;
+
+        byte[] salt = Convert.FromBase64String(client.Salt);
+        SaltedPassword saltedPassword = SaltedPassword.Create(clientSecret, salt);
+
+        return saltedPassword.PasswordHash == client.Secret && client != Dummy.Client;
     }
 
     public void RegisterApp(string clientId, string appName, string[] callbacks)

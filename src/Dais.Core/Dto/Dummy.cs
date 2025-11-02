@@ -1,29 +1,36 @@
 ﻿using System.Security.Cryptography;
 
-using DioRed.Dais.Core.Dto;
-
-namespace DioRed.Dais.Core;
+namespace DioRed.Dais.Core.Dto;
 
 /// <summary>
 /// Helps to prevent timing attacks
 /// </summary>
-internal static class DummyUser
+internal static class Dummy
 {
-    private static readonly Lazy<UserDto> _instance = new(() =>
+    static Dummy()
     {
+        string id = IdGenerator.Generate();
         string randomPassword = Convert.ToBase64String(RandomNumberGenerator.GetBytes(36));
-
         SaltedPassword saltedPassword = SaltedPassword.CreateWithRandomSalt(randomPassword);
 
-        return new UserDto
+        User = new UserDto
         {
-            Id = IdGenerator.Generate(),
+            Id = id,
             UserName = "dummy_user",
             DisplayName = "Dummy User",
             Password = saltedPassword.PasswordHash,
             Salt = saltedPassword.Salt
         };
-    });
 
-    public static UserDto Instance => _instance.Value;
+        Client = new ClientDto
+        {
+            Id = id,
+            ClientId = "dummy_client",
+            Secret = saltedPassword.PasswordHash,
+            Salt = saltedPassword.Salt
+        };
+    }
+
+    public static UserDto User { get; }
+    public static ClientDto Client { get; }
 }
