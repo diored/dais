@@ -52,6 +52,7 @@ app.MapGet("/oauth/authorize", AuthorizeEndpoint.Handle);
 app.MapPost("/oauth/token", TokenEndpoint.Handle);
 app.MapGet("/oauth/set-cookie", SetCookieEndpoint.Handle);
 app.MapGet("/logout", LogoutEndpoint.Handle);
+app.MapGet("/version", VersionEndpoint.Handle);
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
