@@ -1,6 +1,6 @@
 ﻿window.themeManager = {
     init: () => {
-        const saved = localStorage.getItem("theme") || "light";
+        const saved = localStorage.getItem("theme") || "dark";
         document.documentElement.setAttribute("data-theme", saved);
         const btn = document.querySelector("#theme-toggle");
         if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
