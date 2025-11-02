@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DioRed.Common.ConfigurationExtensions" Version="0.3.1" />
+    <PackageReference Include="DioRed.Common.ConfigurationExtensions" Version="0.3.2" />
   </ItemGroup>
 
   <ItemGroup>

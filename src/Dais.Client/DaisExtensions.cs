@@ -1,6 +1,9 @@
 ﻿using System.Text.Json;
 
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DioRed.Dais.Client;
@@ -9,12 +12,12 @@ public static class DaisExtensions
 {
     extension(AuthenticationBuilder builder)
     {
-        public AuthenticationBuilder AddDAIS(Action<DaisOptions> configureOptions)
+        public AuthenticationBuilder AddDais(Action<DaisOptions> configureOptions)
         {
-            return builder.AddDAIS(DaisDefaults.AuthenticationScheme, configureOptions);
+            return builder.AddDais(DaisDefaults.AuthenticationScheme, configureOptions);
         }
 
-        public AuthenticationBuilder AddDAIS(
+        public AuthenticationBuilder AddDais(
             string authenticationScheme,
             Action<DaisOptions> configureOptions
         )
@@ -53,6 +56,42 @@ public static class DaisExtensions
                     ctx.RunClaimActions(payload.RootElement);
                 };
             });
+        }
+    }
+
+    extension(WebApplicationBuilder builder)
+    {
+        public AuthenticationBuilder AddDaisCookieAuthentication(
+            string cookieAuthenticationScheme = CookieAuthenticationDefaults.AuthenticationScheme,
+            string daisAuthenticationScheme = DaisDefaults.AuthenticationScheme,
+            Action<CookieAuthenticationOptions>? configureCookieOptions = null,
+            Action<DaisOptions>? configureDaisOptions = null
+        )
+        {
+            AuthenticationBuilder authenticationBuilder = builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultScheme = daisAuthenticationScheme;
+                options.DefaultSignInScheme = cookieAuthenticationScheme;
+            });
+
+            if (configureCookieOptions is null)
+            {
+                authenticationBuilder.AddCookie(cookieAuthenticationScheme);
+            }
+            else
+            {
+                authenticationBuilder.AddCookie(cookieAuthenticationScheme, configureCookieOptions);
+            }
+
+            configureDaisOptions ??= new Action<DaisOptions>(o =>
+            {
+                o.ClientId = builder.Configuration.GetRequiredValue("Dais:ClientId");
+                o.ClientSecret = builder.Configuration.GetRequiredValue("Dais:ClientSecret");
+            });
+
+            authenticationBuilder.AddDais(daisAuthenticationScheme, configureDaisOptions);
+
+            return authenticationBuilder;
         }
     }
 }
