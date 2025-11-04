@@ -4,6 +4,6 @@ namespace DioRed.Dais.Core.Internal.Repositories;
 
 internal interface IClientRepository
 {
-    string Add(string clientId, string clientSecret);
+    string Add(string ownerId, string clientId, string clientSecret, string displayName, string[] callbacks);
     ClientDto? FindByClientId(string clientId);
 }

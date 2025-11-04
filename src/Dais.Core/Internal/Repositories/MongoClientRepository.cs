@@ -1,5 +1,4 @@
-﻿using DioRed.Dais.Core.Internal;
-using DioRed.Dais.Core.Internal.Dto;
+﻿using DioRed.Dais.Core.Internal.Dto;
 
 using MongoDB.Driver;
 
@@ -12,7 +11,13 @@ internal class MongoClientRepository(
 {
     private readonly IMongoCollection<ClientDto> _clientsCollection = db.GetCollection<ClientDto>(collectionName);
 
-    public string Add(string clientId, string clientSecret)
+    public string Add(
+        string ownerId,
+        string clientId,
+        string clientSecret,
+        string displayName,
+        string[] callbacks
+    )
     {
         string id = IdGenerator.Generate();
 
@@ -21,9 +26,12 @@ internal class MongoClientRepository(
         ClientDto dto = new()
         {
             Id = id,
+            OwnerId = ownerId,
             ClientId = clientId,
-            Secret = saltedPassword.PasswordHash,
-            Salt = saltedPassword.Salt
+            ClientSecret = saltedPassword.PasswordHash,
+            Salt = saltedPassword.Salt,
+            DisplayName = displayName,
+            Callbacks = callbacks
         };
 
         _clientsCollection.InsertOne(dto);
@@ -33,11 +41,8 @@ internal class MongoClientRepository(
 
     public ClientDto? FindByClientId(string clientId)
     {
-        return _clientsCollection.AsQueryable().FirstOrDefault(x => x.ClientId == clientId);
-    }
+        var filter = Builders<ClientDto>.Filter.Eq(x => x.ClientId, clientId);
 
-    public ClientDto? Find(string clientId, string clientSecret)
-    {
-        return _clientsCollection.AsQueryable().FirstOrDefault(x => x.ClientId == clientId && x.Secret == clientSecret);
+        return _clientsCollection.Find(filter).FirstOrDefault();
     }
 }

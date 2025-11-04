@@ -25,9 +25,12 @@ internal static class Dummy
         Client = new ClientDto
         {
             Id = id,
+            OwnerId = "",
             ClientId = "dummy_client",
-            Secret = saltedPassword.PasswordHash,
-            Salt = saltedPassword.Salt
+            ClientSecret = saltedPassword.PasswordHash,
+            Salt = saltedPassword.Salt,
+            DisplayName = "Dummy Client",
+            Callbacks = []
         };
     }
 

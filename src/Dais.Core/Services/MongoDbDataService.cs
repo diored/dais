@@ -9,7 +9,6 @@ namespace DioRed.Dais.Core.Services;
 
 public class MongoDbDataService : IDataService
 {
-    private readonly MongoApplicationRepository _applications;
     private readonly MongoClientRepository _clients;
     private readonly MongoUserRepository _users;
 
@@ -18,24 +17,37 @@ public class MongoDbDataService : IDataService
         MongoClient mongoClient = new($"{settings.ConnectionString}/?authSource={settings.DatabaseName}");
         IMongoDatabase database = mongoClient.GetDatabase(settings.DatabaseName);
 
-        _applications = new MongoApplicationRepository(database, settings.Collections.Applications);
         _clients = new MongoClientRepository(database, settings.Collections.Clients);
         _users = new MongoUserRepository(database, settings.Collections.Users);
     }
 
-    public RegisteredApplication? FindApplicationByCallback(string redirectUri, string clientId)
+    public RegisteredClient? FindClient(string clientId)
     {
-        if (_clients.FindByClientId(clientId) is not { } owner)
+        ClientDto? client = _clients.FindByClientId(clientId);
+
+        return client is null
+            ? null
+            : new RegisteredClient { DisplayName = client.DisplayName };
+    }
+
+    public RegisteredClientWithCallbacks? FindClient(string clientId, string clientSecret)
+    {
+        // Preventing the timing attacks
+        ClientDto client = _clients.FindByClientId(clientId) ?? Dummy.Client;
+
+        byte[] salt = Convert.FromBase64String(client.Salt);
+        SaltedPassword saltedPassword = SaltedPassword.Create(clientSecret, salt);
+
+        if (saltedPassword.PasswordHash != client.ClientSecret || client == Dummy.Client)
         {
             return null;
         }
 
-        if (_applications.Find(owner.Id, redirectUri) is not { } application)
+        return new RegisteredClientWithCallbacks
         {
-            return null;
-        }
-
-        return new RegisteredApplication { ApplicationName = application.Name };
+            DisplayName = client.DisplayName,
+            Callbacks = client.Callbacks
+        };
     }
 
     public UserProfile? FindUser(string username, string password)
@@ -58,35 +70,19 @@ public class MongoDbDataService : IDataService
         };
     }
 
-    public bool HasRegisteredClient(string clientId)
+    public void RegisterClient(string ownerId, string clientId, string clientSecret, string displayName, string[] callbacks)
     {
-        return _clients.FindByClientId(clientId) is not null;
-    }
-
-    public bool HasRegisteredClient(string clientId, string clientSecret)
-    {
-        // Preventing the timing attacks
-        ClientDto client = _clients.FindByClientId(clientId) ?? Dummy.Client;
-
-        byte[] salt = Convert.FromBase64String(client.Salt);
-        SaltedPassword saltedPassword = SaltedPassword.Create(clientSecret, salt);
-
-        return saltedPassword.PasswordHash == client.Secret && client != Dummy.Client;
-    }
-
-    public void RegisterApp(string clientId, string appName, string[] callbacks)
-    {
-        if (_clients.FindByClientId(clientId) is not { } client)
+        if (_users.FindByUserId(ownerId) is null)
         {
-            throw new InvalidOperationException("Client not found");
+            throw new InvalidOperationException($"Owner (id={ownerId}) is not registered.");
         }
 
-        _applications.Add(client.Id, appName, callbacks);
-    }
+        if (_clients.FindByClientId(clientId) is not null)
+        {
+            throw new InvalidOperationException("Client already registered");
+        }
 
-    public void RegisterClient(string clientId, string clientSecret)
-    {
-        _clients.Add(clientId, clientSecret);
+        _clients.Add(ownerId, clientId, clientSecret, displayName, callbacks);
     }
 
     public void RegisterUser(string userName, string displayName, string password)

@@ -62,17 +62,18 @@ internal static class TokenEndpoint
             return BadRequest("code_verifier should be provided");
         }
 
-        if (!dataService.HasRegisteredClient(request.ClientId, request.ClientSecret))
-        {
-            return BadRequest("Invalid client credentials");
-        }
-
         if (request.GrantType != "authorization_code")
         {
             return BadRequest($"Unsupported grant_type: {request.GrantType}");
         }
 
-        if (dataService.FindApplicationByCallback(request.RedirectUri, request.ClientId) is null)
+        RegisteredClientWithCallbacks? client = dataService.FindClient(request.ClientId, request.ClientSecret);
+        if (client is null)
+        {
+            return BadRequest("Invalid client credentials");
+        }
+
+        if (!client.Callbacks.Contains(request.RedirectUri))
         {
             return BadRequest($"Callback {request.RedirectUri} wasn't registered for this client");
         }

@@ -58,19 +58,15 @@ internal static class AuthorizeEndpoint
             return BadRequest($"Unsuppored response_type: {request.ResponseType}");
         }
 
-        if (!dataService.HasRegisteredClient(request.ClientId))
-        {
-            return BadRequest("Invalid client credentials");
-        }
-
         if (request.CodeChallengeMethod != "S256")
         {
             return BadRequest($"Unsupported code_challenge_method: {request.CodeChallengeMethod}");
         }
 
-        if (dataService.FindApplicationByCallback(request.RedirectUri, request.ClientId) is not { } app)
+        RegisteredClient? client = dataService.FindClient(request.ClientId);
+        if (client is null)
         {
-            return BadRequest($"Callback {request.RedirectUri} wasn't registered for this client");
+            return BadRequest("Invalid client id");
         }
 
         IDataProtector protector = dataProtectionProvider.CreateProtector("oauth");
@@ -84,7 +80,7 @@ internal static class AuthorizeEndpoint
             Expiry = DateTime.Now.Add(Constants.AuthCodeExpiration),
             UserName = ctx.User?.FindFirstValue(ClaimTypes.NameIdentifier) ?? "",
             DisplayName = ctx.User?.FindFirstValue(ClaimTypes.Name) ?? "",
-            ApplicationName = app.ApplicationName
+            ApplicationName = client.DisplayName
         };
 
         string authCodeString = protector.Protect(JsonSerializer.Serialize(authCode));
@@ -99,7 +95,7 @@ internal static class AuthorizeEndpoint
             ),
             AuthorizeCallback = authorizeCallback,
             Application = new LoginContext.ApplicationData(
-                app.ApplicationName,
+                client.DisplayName,
                 returnUrl
             ),
             ExpiresAt = DateTimeOffset.Now.Add(Constants.LoginContextExpiration)

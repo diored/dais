@@ -1,4 +1,4 @@
-﻿using DioRed.Dais.Core.Internal;
+﻿
 using DioRed.Dais.Core.Internal.Dto;
 
 using MongoDB.Driver;
@@ -11,11 +11,6 @@ internal class MongoUserRepository(
 ) : IUserRepository
 {
     private readonly IMongoCollection<UserDto> _usersCollection = db.GetCollection<UserDto>(collectionName);
-
-    public UserDto? FindByUserName(string userName)
-    {
-        return _usersCollection.AsQueryable().FirstOrDefault(x => x.UserName == userName);
-    }
 
     public string Add(string userName, string displayName, string passwordHash, string salt)
     {
@@ -31,5 +26,19 @@ internal class MongoUserRepository(
         _usersCollection.InsertOne(user);
 
         return user.Id;
+    }
+
+    public UserDto? FindByUserName(string userName)
+    {
+        var filter = Builders<UserDto>.Filter.Eq(x => x.UserName, userName);
+
+        return _usersCollection.Find(filter).FirstOrDefault();
+    }
+
+    public UserDto? FindByUserId(string id)
+    {
+        var filter = Builders<UserDto>.Filter.Eq(x => x.Id, id);
+
+        return _usersCollection.Find(filter).FirstOrDefault();
     }
 }

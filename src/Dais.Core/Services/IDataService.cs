@@ -4,11 +4,9 @@ namespace DioRed.Dais.Core.Services;
 
 public interface IDataService
 {
-    RegisteredApplication? FindApplicationByCallback(string callback, string clientId);
+    RegisteredClient? FindClient(string clientId);
+    RegisteredClientWithCallbacks? FindClient(string clientId, string clientSecret);
     UserProfile? FindUser(string username, string password);
-    bool HasRegisteredClient(string clientId);
-    bool HasRegisteredClient(string clientId, string clientSecret);
-    void RegisterApp(string clientId, string appName, string[] callbacks);
-    void RegisterClient(string clientId, string clientSecret);
+    void RegisterClient(string ownerId, string clientId, string clientSecret, string displayName, string[] callbacks);
     void RegisterUser(string userName, string displayName, string password);
 }
