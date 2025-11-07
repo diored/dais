@@ -3,6 +3,8 @@ using DioRed.Dais.Core.Internal;
 using DioRed.Dais.Core.Internal.Dto;
 using DioRed.Dais.Core.Internal.Repositories;
 
+using Isopoh.Cryptography.Argon2;
+
 using MongoDB.Driver;
 
 namespace DioRed.Dais.Core.Services;
@@ -35,10 +37,7 @@ public class MongoDbDataService : IDataService
         // Preventing the timing attacks
         ClientDto client = _clients.FindByClientId(clientId) ?? Dummy.Client;
 
-        byte[] salt = Convert.FromBase64String(client.Salt);
-        SaltedPassword saltedPassword = SaltedPassword.Create(clientSecret, salt);
-
-        if (saltedPassword.PasswordHash != client.ClientSecret || client == Dummy.Client)
+        if (!Argon2.Verify(client.ClientSecretHash, clientSecret) || client == Dummy.Client)
         {
             return null;
         }
@@ -55,10 +54,7 @@ public class MongoDbDataService : IDataService
         // Preventing the timing attacks
         UserDto user = _users.FindByUserName(username) ?? Dummy.User;
 
-        byte[] salt = Convert.FromBase64String(user.Salt);
-        SaltedPassword saltedPassword = SaltedPassword.Create(password, salt);
-
-        if (saltedPassword.PasswordHash != user.Password || user == Dummy.User)
+        if (!Argon2.Verify(user.PasswordHash, password) || user == Dummy.User)
         {
             return null;
         }
@@ -87,8 +83,10 @@ public class MongoDbDataService : IDataService
 
     public void RegisterUser(string userName, string displayName, string password)
     {
-        SaltedPassword salted = SaltedPassword.CreateWithRandomSalt(password);
-
-        _users.Add(userName, displayName, salted.PasswordHash, salted.Salt);
+        _users.Add(
+            userName,
+            displayName,
+            password
+        );
     }
 }

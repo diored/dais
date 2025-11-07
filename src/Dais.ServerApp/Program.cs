@@ -1,7 +1,7 @@
 using DioRed.Dais.Core.Services;
-using DioRed.Dais.ServerApp;
 using DioRed.Dais.ServerApp.Components;
 using DioRed.Dais.ServerApp.Endpoints;
+using DioRed.Dais.ServerApp.Internal;
 
 using Microsoft.AspNetCore.HttpOverrides;
 

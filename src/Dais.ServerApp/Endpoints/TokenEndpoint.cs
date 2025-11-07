@@ -9,6 +9,7 @@ using System.Web;
 using DioRed.Dais.Core;
 using DioRed.Dais.Core.Entities;
 using DioRed.Dais.Core.Services;
+using DioRed.Dais.ServerApp.Internal;
 
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.IdentityModel.JsonWebTokens;

@@ -1,5 +1,7 @@
 ﻿using DioRed.Dais.Core.Internal.Dto;
 
+using Isopoh.Cryptography.Argon2;
+
 using MongoDB.Driver;
 
 namespace DioRed.Dais.Core.Internal.Repositories;
@@ -21,15 +23,12 @@ internal class MongoClientRepository(
     {
         string id = IdGenerator.Generate();
 
-        SaltedPassword saltedPassword = SaltedPassword.CreateWithRandomSalt(clientSecret);
-
         ClientDto dto = new()
         {
             Id = id,
             OwnerId = ownerId,
             ClientId = clientId,
-            ClientSecret = saltedPassword.PasswordHash,
-            Salt = saltedPassword.Salt,
+            ClientSecretHash = Argon2.Hash(clientSecret),
             DisplayName = displayName,
             Callbacks = callbacks
         };

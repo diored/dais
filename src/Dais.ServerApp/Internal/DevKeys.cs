@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 
 using Microsoft.IdentityModel.Tokens;
 
-namespace DioRed.Dais.ServerApp;
+namespace DioRed.Dais.ServerApp.Internal;
 
 public class DevKeys
 {
@@ -25,5 +25,5 @@ public class DevKeys
     }
 
     public RSA RsaKey { get; }
-    public RsaSecurityKey RsaSecurityKey => new RsaSecurityKey(RsaKey);
+    public RsaSecurityKey RsaSecurityKey => new(RsaKey);
 }

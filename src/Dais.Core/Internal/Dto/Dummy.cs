@@ -1,5 +1,7 @@
 ﻿using System.Security.Cryptography;
 
+using Isopoh.Cryptography.Argon2;
+
 namespace DioRed.Dais.Core.Internal.Dto;
 
 /// <summary>
@@ -11,15 +13,13 @@ internal static class Dummy
     {
         string id = IdGenerator.Generate();
         string randomPassword = Convert.ToBase64String(RandomNumberGenerator.GetBytes(36));
-        SaltedPassword saltedPassword = SaltedPassword.CreateWithRandomSalt(randomPassword);
 
         User = new UserDto
         {
             Id = id,
             UserName = "dummy_user",
             DisplayName = "Dummy User",
-            Password = saltedPassword.PasswordHash,
-            Salt = saltedPassword.Salt
+            PasswordHash = Argon2.Hash(randomPassword)
         };
 
         Client = new ClientDto
@@ -27,8 +27,7 @@ internal static class Dummy
             Id = id,
             OwnerId = "",
             ClientId = "dummy_client",
-            ClientSecret = saltedPassword.PasswordHash,
-            Salt = saltedPassword.Salt,
+            ClientSecretHash = Argon2.Hash(randomPassword),
             DisplayName = "Dummy Client",
             Callbacks = []
         };

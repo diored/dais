@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="DioRed.Common.ConfigurationExtensions" Version="0.3.2" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.14.0" />
   </ItemGroup>
 
   <ItemGroup>

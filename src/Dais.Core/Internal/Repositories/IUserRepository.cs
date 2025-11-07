@@ -4,6 +4,6 @@ namespace DioRed.Dais.Core.Internal.Repositories;
 
 internal interface IUserRepository
 {
-    string Add(string userName, string displayName, string passwordHash, string salt);
+    string Add(string userName, string displayName, string password);
     UserDto? FindByUserName(string userName);
 }
