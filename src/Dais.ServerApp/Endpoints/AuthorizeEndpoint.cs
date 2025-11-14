@@ -1,142 +1,82 @@
-﻿using System.Security.Claims;
-using System.Text.Json;
-using System.Web;
+using System.Security.Claims;
 
-using DioRed.Dais.Core;
-using DioRed.Dais.Core.Entities;
-using DioRed.Dais.Core.Services;
+using Dais.Core.Domain.Interfaces;
+using Dais.Core.OAuth;
+using Dais.Core.OAuth.Models;
+using Dais.Core.OAuth.Validators;
 
-using Microsoft.AspNetCore.DataProtection;
-
-namespace DioRed.Dais.ServerApp.Endpoints;
+namespace Dais.ServerApp.Endpoints;
 
 internal static class AuthorizeEndpoint
 {
-    public static IResult Handle(
+    public static async Task<IResult> Handle(
         HttpContext ctx,
-        IDataProtectionProvider dataProtectionProvider,
-        ILoginContextService loginContextService,
-        IDataService dataService
-    )
+        IClientService clients,
+        IAuthorizationService authService,
+        AuthorizeRequestValidator validator)
     {
-        var authorizeCallback = $"/oauth/authorize{ctx.Request.QueryString.Value}";
+        var q = ctx.Request.Query;
 
-        if (!ctx.User?.Identity?.IsAuthenticated ?? true)
+        var req = new AuthorizeRequest
         {
-            return Results.Redirect($"/login?authorizeCallback={HttpUtility.UrlEncode(authorizeCallback)}");
-        }
-
-        AuthorizeRequest request = AuthorizeRequest.ParseFrom(ctx.Request.Query);
-
-        if (string.IsNullOrEmpty(request.ResponseType))
-        {
-            return BadRequest("response_type was not provided");
-        }
-
-        if (string.IsNullOrEmpty(request.ClientId))
-        {
-            return BadRequest("client_id was not provided");
-        }
-
-        if (string.IsNullOrEmpty(request.CodeChallenge))
-        {
-            return BadRequest("code_challenge was not provided");
-        }
-
-        if (string.IsNullOrEmpty(request.CodeChallengeMethod))
-        {
-            return BadRequest("code_challenge_method was not provided");
-        }
-
-        if (string.IsNullOrEmpty(request.RedirectUri))
-        {
-            return BadRequest("redirect_uri was not provided");
-        }
-
-        if (request.ResponseType != "code")
-        {
-            return BadRequest($"Unsuppored response_type: {request.ResponseType}");
-        }
-
-        if (request.CodeChallengeMethod != "S256")
-        {
-            return BadRequest($"Unsupported code_challenge_method: {request.CodeChallengeMethod}");
-        }
-
-        RegisteredClient? client = dataService.FindClient(request.ClientId);
-        if (client is null)
-        {
-            return BadRequest("Invalid client id");
-        }
-
-        IDataProtector protector = dataProtectionProvider.CreateProtector("oauth");
-
-        AuthCode authCode = new()
-        {
-            ClientId = request.ClientId ?? "",
-            CodeChallenge = request.CodeChallenge ?? "",
-            CodeChallengeMethod = request.CodeChallengeMethod ?? "",
-            RedirectUri = request.RedirectUri ?? "",
-            Expiry = DateTime.Now.Add(Constants.AuthCodeExpiration),
-            UserName = ctx.User?.FindFirstValue(ClaimTypes.NameIdentifier) ?? "",
-            DisplayName = ctx.User?.FindFirstValue(ClaimTypes.Name) ?? "",
-            ApplicationName = client.DisplayName
+            ResponseType = q["response_type"],
+            ClientId = q["client_id"],
+            RedirectUri = q["redirect_uri"],
+            Scope = q["scope"],
+            State = q["state"],
+            CodeChallenge = q["code_challenge"],
+            CodeChallengeMethod = q["code_challenge_method"]
         };
 
-        string authCodeString = protector.Protect(JsonSerializer.Serialize(authCode));
+        var client = req.ClientId is null ? null : clients.FindById(req.ClientId);
+        var validation = validator.Validate(req, client);
 
-        string returnUrl = $"{request.RedirectUri}?code={authCodeString}&state={request.State}&iss={Constants.UrlEncodedTokenIssuer}";
-
-        LoginContext loginContext = new()
+        if (!validation.IsValid)
         {
-            User = new LoginContext.UserData(
-                authCode.UserName,
-                authCode.DisplayName
-            ),
-            AuthorizeCallback = authorizeCallback,
-            Application = new LoginContext.ApplicationData(
-                client.DisplayName,
-                returnUrl
-            ),
-            ExpiresAt = DateTimeOffset.Now.Add(Constants.LoginContextExpiration)
-        };
+            if (string.IsNullOrEmpty(req.RedirectUri))
+                return OAuthErrorFactory.JsonError(validation.ErrorCode!.Value, validation.Description, validation.State);
 
-        string key = loginContextService.Save(loginContext);
+            return OAuthErrorFactory.RedirectError(req.RedirectUri!, validation.ErrorCode!.Value, validation.Description, validation.State);
+        }
 
-        return Results.Redirect($"/confirm?code={key}");
-
-        IResult BadRequest(string error)
+        // если не залогинен — на login
+        if (!ctx.User.Identity?.IsAuthenticated ?? true)
         {
-            return Results.BadRequest(new
+            var returnUrl = ctx.Request.Path + ctx.Request.QueryString;
+            return Results.Redirect($"/login?returnUrl={Uri.EscapeDataString(returnUrl)}");
+        }
+
+        // consent (Confirm) — если confirm=yes, выдаём код
+        if (q.TryGetValue("confirm", out var confirmFlag) && confirmFlag == "yes")
+        {
+            var subjectId = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            if (client!.RequirePkce && string.IsNullOrEmpty(req.CodeChallenge))
             {
-                error = $"invalid_request: {error}",
-                state = request.State,
-                iss = Constants.UrlEncodedTokenIssuer
-            });
-        }
-    }
+                return OAuthErrorFactory.RedirectError(
+                    req.RedirectUri!,
+                    OAuthErrorCode.InvalidRequest,
+                    "code_challenge required for this client",
+                    req.State
+                );
+            }
 
-    private record AuthorizeRequest(
-        string? State,
-        string? ResponseType,
-        string? ClientId,
-        string? CodeChallenge,
-        string? CodeChallengeMethod,
-        string? RedirectUri,
-        string? Scope
-    )
-    {
-        public static AuthorizeRequest ParseFrom(IQueryCollection query)
-        {
-            return new AuthorizeRequest(
-                query["state"],
-                query["response_type"],
-                query["client_id"],
-                query["code_challenge"],
-                query["code_challenge_method"],
-                query["redirect_uri"],
-                query["scope"]
-            );
+            var code = await authService.CreateAuthorizationCodeAsync(
+                client!,
+                req.RedirectUri!,
+                req.CodeChallenge!,
+                subjectId,
+                req.Scope);
+
+            var redirect = $"{req.RedirectUri}?code={Uri.EscapeDataString(code.Value)}";
+            if (req.State is not null)
+                redirect += $"&state={Uri.EscapeDataString(req.State)}";
+
+            return Results.Redirect(redirect);
         }
+
+        // иначе — на Confirm
+        var fullAuthorizeUrl = ctx.Request.Path + ctx.Request.QueryString;
+        return Results.Redirect($"/confirm?returnUrl={Uri.EscapeDataString(fullAuthorizeUrl)}");
     }
 }

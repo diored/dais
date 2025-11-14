@@ -1,4 +1,4 @@
-﻿namespace DioRed.Dais.Core.Services;
+namespace Dais.Core.Services;
 
 public class MongoDbSettings
 {
@@ -8,7 +8,6 @@ public class MongoDbSettings
 
     public class CollectionNames
     {
-        public required string Applications { get; init; }
         public required string Clients { get; init; }
         public required string Users { get; init; }
     }

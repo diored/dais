@@ -5,18 +5,22 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
-    <AssemblyName>DioRed.Dais.ServerApp</AssemblyName>
-    <RootNamespace>DioRed.Dais.ServerApp</RootNamespace>
+    <AssemblyName>Dais.ServerApp</AssemblyName>
+    <RootNamespace>Dais.ServerApp</RootNamespace>
     <UserSecretsId>c6bcb664-a16a-45b7-a1a5-45bd3db28bb6</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DioRed.Common.ConfigurationExtensions" Version="0.3.2" />
-    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.14.0" />
+    <PackageReference Include="DioRed.Common.ConfigurationExtensions" Version="0.4.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Dais.Core\Dais.Core.csproj" />
+    <ProjectReference Include="..\Dais.Infrastructure\Dais.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Internal\" />
   </ItemGroup>
 
 </Project>

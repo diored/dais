@@ -1,69 +1,58 @@
-﻿@page "/confirm"
+@page "/confirm"
 @rendermode InteractiveServer
 
-@using System.Web
-@using DioRed.Dais.Core
-@using DioRed.Dais.Core.Entities
-@using DioRed.Dais.Core.Services
-@using Microsoft.AspNetCore.Mvc.ViewFeatures
+@inject NavigationManager Nav
 
-@inject ILoginContextService LoginContextService
-@inject NavigationManager NavigationManager
+<PageTitle>Confirm your login | DAIS</PageTitle>
 
-<PageTitle>Confirm you login | DAIS</PageTitle>
-
-@if (_loginContext is null)
+@if (string.IsNullOrEmpty(returnUrl))
 {
-    <h2 aria-busy="true">Loading...</h2>
+    <h2>Error: missing returnUrl</h2>
 }
 else
 {
     <div>
         <h1>Confirm your login</h1>
-        <p>You are currently signed in as @_loginContext.User.DisplayName (@_loginContext.User.UserName).</p>
-        @if (_loginContext.Application is not null)
-        {
-            <p>
-                Would you like to continue to "@_loginContext.Application.ApplicationName" using this account?
-            </p>
 
-            <div class="grid">
-                <button @onclick="ConfirmLogin">Continue</button>
-                <button class="outline second-button" @onclick="Logout">Switch account</button>
-            </div>
-        }
+        <p>You are currently signed in as @userName.</p>
+
+        <p>
+            Would you like to continue to the application using this account?
+        </p>
+
+        <div class="grid">
+            <button @onclick="ConfirmLogin">Continue</button>
+            <button class="outline second-button" @onclick="Logout">Switch account</button>
+        </div>
     </div>
 }
 
 @code {
 
-    [Parameter, SupplyParameterFromQuery] public string Code { get; set; } = default!;
+    [Parameter, SupplyParameterFromQuery]
+    public string? returnUrl { get; set; }
 
-    private LoginContext? _loginContext;
+    string userName = "";
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override void OnInitialized()
     {
-        if (firstRender)
-        {
-            _loginContext = LoginContextService.Pull(Code);
-            StateHasChanged();
-        }
+        // read cookie-authenticated user
+        var authUser = Nav.ToAbsoluteUri(Nav.Uri); // force load?
+        // we can't read auth directly here, fetch from /userinfo?
+
+        // simplest approach: require user to be already logged in
+        // In the future: call /oauth/userinfo
+        // For now: leave placeholder
+        userName = "Authenticated user";
     }
 
     private void ConfirmLogin()
     {
-        if (_loginContext?.Application is not null)
-        {
-            NavigationManager.NavigateTo(_loginContext.Application.ApplicationCallback);
-        }
+        Nav.NavigateTo($"{returnUrl}&confirm=yes", forceLoad: true);
     }
 
     private void Logout()
     {
-        string uri = _loginContext!.AuthorizeCallback is null
-            ? "/logout"
-            : $"/logout?authorizeCallback={HttpUtility.UrlEncode(_loginContext!.AuthorizeCallback)}";
-
-        NavigationManager.NavigateTo(uri, forceLoad: true);
+        Nav.NavigateTo("/logout", forceLoad: true);
     }
 }

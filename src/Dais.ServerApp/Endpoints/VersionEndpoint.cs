@@ -1,4 +1,4 @@
-﻿namespace DioRed.Dais.ServerApp.Endpoints;
+﻿namespace Dais.ServerApp.Endpoints;
 
 public static class VersionEndpoint
 {

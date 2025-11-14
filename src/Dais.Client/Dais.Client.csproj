@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DioRed.Common.ConfigurationExtensions" Version="0.3.2" />
+    <PackageReference Include="DioRed.Common.ConfigurationExtensions" Version="0.4.0" />
   </ItemGroup>
 
 </Project>

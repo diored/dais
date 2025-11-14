@@ -1,17 +1,10 @@
-﻿@page "/login"
+@page "/login"
 @rendermode InteractiveServer
 
-@using System.Security.Claims
-@using DioRed.Dais.Core
-@using DioRed.Dais.Core.Entities
-@using DioRed.Dais.Core.Services
-@using Microsoft.AspNetCore.Authentication
-@using Microsoft.Extensions.Caching.Memory
+@using Microsoft.AspNetCore.Components.Web
 
-@inject IConfiguration Configuration
-@inject ILoginContextService LoginContextService
-@inject NavigationManager NavigationManager
-@inject IDataService DataService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
 
 <PageTitle>Login | DAIS</PageTitle>
 
@@ -43,42 +36,49 @@
 
 @code {
 
-    [Parameter, SupplyParameterFromQuery] public string? AuthorizeCallback { get; set; } = default!;
+    // NEW: вместо старого AuthorizeCallback
+    [Parameter, SupplyParameterFromQuery]
+    public string? returnUrl { get; set; } = "/";
 
     private string _userName = "";
     private string _password = "";
 
     private bool _isInvalid;
-    private string _isBusy = "false";
+    private bool _isBusy;
 
     private async Task TryToLogin(MouseEventArgs evt)
     {
         _isInvalid = false;
-        _isBusy = "true";
+        _isBusy = true;
 
-        UserProfile? userProfile = DataService.FindUser(_userName, _password);
+        var content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["username"] = _userName,
+            ["password"] = _password,
+            ["returnUrl"] = returnUrl ?? "/"
+        });
 
-        _isBusy = "false";
+        using HttpClient http = new() { BaseAddress = new Uri(Nav.BaseUri) };
+        var response = await http.PostAsync("/auth/login-check", content);
+        var result = await response.Content.ReadFromJsonAsync<LoginCheckResult>();
 
-        if (userProfile is null)
+        _isBusy = false;
+
+        if (result is null || !result.success)
         {
             _isInvalid = true;
             return;
         }
 
-        LoginContext loginContext = new()
-        {
-            User = new LoginContext.UserData(
-                userProfile.UserName,
-                userProfile.DisplayName
-            ),
-            AuthorizeCallback = AuthorizeCallback,
-            Application = null,
-            ExpiresAt = DateTimeOffset.Now.Add(Constants.LoginContextExpiration)
-        };
+        await JS.InvokeVoidAsync("daisAuth.loginCommit", result.userName, result.displayName);
 
-        string code = LoginContextService.Save(loginContext);
+        Nav.NavigateTo(returnUrl ?? "/", forceLoad: true);
+    }
 
-        NavigationManager.NavigateTo($"/oauth/set-cookie?code={code}", forceLoad: true);
+    private class LoginCheckResult
+    {
+        public bool success { get; set; }
+        public string? userName { get; set; }
+        public string? displayName { get; set; }
     }
 }
