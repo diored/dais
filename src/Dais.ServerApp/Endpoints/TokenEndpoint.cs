@@ -38,8 +38,18 @@ internal static class TokenEndpoint
         if (!validation.IsValid)
             return OAuthErrorFactory.JsonError(validation.ErrorCode!.Value, validation.Description, validation.State);
 
-        var response = await tokens.IssueTokensAsync(client!, code!, req.CodeVerifier, req.Scope);
-        return Results.Json(response)
+        var token = await tokens.IssueTokensAsync(client!, code!, req.CodeVerifier, req.Scope);
+
+        var dto = new
+        {
+            access_token = token.AccessToken,
+            token_type = "Bearer",
+            expires_in = token.ExpiresIn,
+            refresh_token = token.RefreshToken,
+            scope = token.Scope
+        };
+
+        return Results.Json(dto)
             .WithHeader("Cache-Control", "no-store");
     }
 }
